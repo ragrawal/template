@@ -1,0 +1,44 @@
+# Copier template configuration for bootstrapping installable Python projects.
+# See specs/001-python-project-template/contracts/template-answers-schema.md for the
+# full answer-schema contract these prompts implement.
+
+_min_copier_version: "9.0.0"
+
+# No _subdirectory: the template content lives directly alongside this file
+# (rather than in a nested template/ subdir) so Copier's own default excludes
+# (copier.y*ml, ~*, *.py[co], __pycache__, .git, .DS_Store, .svn) apply
+# automatically - those defaults are silently skipped whenever _subdirectory
+# is set, which previously let stray __pycache__/*.pyc get copied into every
+# generated project.
+
+_envops:
+  keep_trailing_newline: true
+  undefined: jinja2.StrictUndefined
+
+package_name:
+  type: str
+  help: Python package/import name (must be a valid Python identifier)
+  validator: >-
+    {% if not (package_name | regex_search('^[a-zA-Z_][a-zA-Z0-9_]*$')) %}
+    package_name must be a valid Python identifier (letters, digits, underscores; cannot start with a digit).
+    {% endif %}
+
+python_version:
+  type: str
+  help: Python version to pin for this project
+  default: "3.12"
+  choices:
+    - "3.11"
+    - "3.12"
+    - "3.13"
+    - "3.14"
+
+# Materialize a real .python-version via uv immediately after generation.
+_tasks:
+  - "uv python pin {{ python_version }}"
+
+# No breaking answer-schema changes have shipped yet. If a future change renames,
+# removes, or changes the meaning of an existing key (see the compatibility rule in
+# contracts/template-answers-schema.md), add a version-gated migration here so
+# `copier update` on existing generated projects doesn't silently break.
+_migrations: []

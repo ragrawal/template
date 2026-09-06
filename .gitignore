@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+
+# Coverage / test artifacts
+.coverage
+.coverage.*
+htmlcov/
+.pytest_cache/
+
+# Type checkers / tooling caches
+.mypy_cache/
+.ruff_cache/
+.pyright/
+
+# Temp-generated projects from the regression test suite
+/tmp-copier-*
+*.tmp-copier/
+
+# Editor / OS
+.DS_Store
+.vscode/
+.idea/
+*.swp

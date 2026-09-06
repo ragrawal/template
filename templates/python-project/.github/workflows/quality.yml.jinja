@@ -1,0 +1,22 @@
+name: Quality
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        run: uv sync --locked
+
+      - name: Run quality checks
+        run: uv run poe check --full

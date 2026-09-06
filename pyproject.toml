@@ -1,0 +1,19 @@
+[project]
+name = "python-project-copier-template"
+version = "0.1.0"
+description = "Copier template for bootstrapping installable Python projects (uv + ruff + pyright + pytest + Poe the Poet)."
+requires-python = ">=3.11"
+dependencies = []
+
+[tool.uv]
+package = false
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[dependency-groups]
+dev = [
+    "copier>=9.18.1",
+    "pytest>=9.1.1",
+    "pytest-bdd>=8.1.0",
+]

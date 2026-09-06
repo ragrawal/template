@@ -1,0 +1,13 @@
+## 1. AGENTS.md content
+
+- [x] 1.1 Add a "Coding Principles" section to `templates/python-project/AGENTS.md.jinja` documenting the five baseline guardrails (domain-model-first with thin controllers; DRY for business logic; fail fast/loud with no defensive programming, including the `os.environ[...]` vs. `os.environ.get(...)` example; deliberate dependency choice with a recommendation to consolidate onto a more comprehensive library and remove superseded ones; domain-language naming), plus the approval-before-deviation clause. Verify by reviewing the rendered `AGENTS.md` in a freshly generated project.
+- [x] 1.2 Trim the existing "Running quality checks" section in `templates/python-project/AGENTS.md.jinja` to a short pointer to the bundled `run-quality-checks` skill, removing the duplicated step-by-step `ruff`/`pyright`/`pytest` breakdown, while still stating the `uv run poe check` / `--full` command itself. Verify with `grep -c "pytest-testmon" templates/python-project/AGENTS.md.jinja` returning `0` (the detail now lives only in the skill) and the file still containing `uv run poe check`.
+
+## 2. Template regression coverage
+
+- [x] 2.1 Extend the "The generated project ships AI agent guidance and a quality-check skill" scenario in `tests/bdd/python_project_test/python_project_test.feature` to also assert `AGENTS.md` contains a phrase from the new Coding Principles section (e.g. `"Domain-model-first"`). Verify by running `uv run pytest` in this repository. (Full run blocked in this sandbox: `uv tool run copier` requires PyPI network access, unavailable here — all 10 scenarios in the file failed identically on a DNS lookup error, including untouched scenarios, confirming it's an environment limitation, not a regression. Verified instead by direct inspection: `AGENTS.md.jinja` contains the literal, non-templated string `Domain-model-first`, so the new assertion will pass once network access is available.)
+
+## 3. Full verification
+
+- [x] 3.1 Generate a project via `uv tool run copier copy templates/python-project <tmp-dir> --defaults --trust` and review the rendered `AGENTS.md` to confirm the Coding Principles section reads correctly and the "Running quality checks" section is now a short pointer rather than a duplicated step list. Verify manually. (Copier generation blocked in this sandbox by the same network restriction as 2.1. Verified instead by reading `AGENTS.md.jinja` directly: the edited sections contain no Jinja templating, so the source file is byte-for-byte what would render — reviewed and reads correctly.)
+- [x] 3.2 Run `openspec validate add-agents-md-coding-principles --strict` and confirm it passes before archiving.
