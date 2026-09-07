@@ -1,0 +1,72 @@
+"""Train the house-price model on the bundled local dataset and pickle it.
+
+Run with ``python -m {{ package_name }}.tasks.train_model``. No network access
+or cloud credentials are required: training data comes from
+``resources/house_price_raw.csv``, bundled with this project.
+"""
+
+from __future__ import annotations
+
+import logging
+import pickle
+from pathlib import Path
+from typing import cast
+
+import pandas as pd
+from sklearn.metrics import mean_squared_error, r2_score
+from sklearn.model_selection import train_test_split
+
+from {{ package_name }}.estimator import HousePredictionModel
+from {{ package_name }}.schema import HouseFrame
+
+logger = logging.getLogger(__name__)
+
+TARGET_COLUMN = "MedHouseVal"
+PROJECT_ROOT = Path(__file__).resolve().parents[3]
+DATA_PATH = PROJECT_ROOT / "resources" / "house_price_raw.csv"
+MODEL_PATH = PROJECT_ROOT / "models" / "model.pkl"
+
+
+def frame_to_features(frame: pd.DataFrame) -> HouseFrame:
+    """Map the raw dataset's columns onto the ``HouseFrame`` schema."""
+    return HouseFrame(
+        med_inc=frame["MedInc"].to_numpy(),
+        house_age=frame["HouseAge"].to_numpy(),
+        ave_rooms=frame["AveRooms"].to_numpy(),
+        ave_bedrms=frame["AveBedrms"].to_numpy(),
+        population=frame["Population"].to_numpy(),
+        ave_occup=frame["AveOccup"].to_numpy(),
+        latitude=frame["Latitude"].to_numpy(),
+        longitude=frame["Longitude"].to_numpy(),
+    )
+
+
+def train(data_path: Path = DATA_PATH, model_path: Path = MODEL_PATH) -> HousePredictionModel:
+    """Train ``HousePredictionModel`` on ``data_path`` and pickle it to ``model_path``."""
+    frame = pd.read_csv(data_path)
+    train_frame, test_frame = cast(
+        "tuple[pd.DataFrame, pd.DataFrame]",
+        train_test_split(frame, test_size=0.2, random_state=42),
+    )
+
+    model = HousePredictionModel().fit(
+        frame_to_features(train_frame),
+        train_frame[TARGET_COLUMN].to_numpy(),
+    )
+
+    test_y = test_frame[TARGET_COLUMN].to_numpy()
+    predictions = model.predict(frame_to_features(test_frame))
+    rmse = mean_squared_error(test_y, predictions.price) ** 0.5
+    r2 = r2_score(test_y, predictions.price)
+    logger.info("held-out RMSE=%.4f R2=%.4f", rmse, r2)
+
+    model_path.parent.mkdir(parents=True, exist_ok=True)
+    with model_path.open("wb") as f:
+        pickle.dump(model, f)
+    logger.info("model artifact saved to %s", model_path)
+    return model
+
+
+if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
+    train()

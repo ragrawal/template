@@ -15,6 +15,14 @@ _envops:
   keep_trailing_newline: true
   undefined: jinja2.StrictUndefined
 
+# Keep every generated project's Copier answer record in one hidden,
+# discoverable location instead of a loose root-level dotfile. Copier resolves
+# _answers_file relative to the destination path passed on the command line
+# (not relative to wherever the boilerplate answers-file template lives in this
+# tree), so the {{ package_name }} prefix is required here to land the answers
+# file inside the generated project folder rather than beside it.
+_answers_file: "{{ package_name }}/.answers/.python_project.yml"
+
 package_name:
   type: str
   help: Python package/import name (must be a valid Python identifier)
@@ -37,8 +45,16 @@ python_version:
 _tasks:
   - "uv python pin {{ python_version }}"
 
-# No breaking answer-schema changes have shipped yet. If a future change renames,
-# removes, or changes the meaning of an existing key (see the compatibility rule in
+# No _migrations entry for the _answers_file relocation above: this template
+# never wrote any answers file before this change (no template file matched
+# _copier_conf.answers_file), so no previously-generated project can have a
+# stale root-level .copier-answers.yml to move - there is nothing to migrate.
+#
+# If a future change renames, removes, or changes the meaning of an existing
+# answer key (see the compatibility rule in
 # contracts/template-answers-schema.md), add a version-gated migration here so
-# `copier update` on existing generated projects doesn't silently break.
+# `copier update` on existing generated projects doesn't silently break. Note
+# that Copier only runs a _migrations entry when both the subproject's
+# recorded template version and this template's current version resolve from
+# real git tags (PEP 440); this repository has no tags yet.
 _migrations: []

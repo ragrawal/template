@@ -1,0 +1,37 @@
+import numpy as np
+
+from {{ package_name }}.schema import HouseFrame
+
+
+def test_house_frame_accepts_array_input():
+    frame = HouseFrame(
+        med_inc=np.array([8.3, 3.1]),
+        house_age=np.array([41.0, 20.0]),
+        ave_rooms=np.array([6.9, 5.0]),
+        ave_bedrms=np.array([1.0, 1.1]),
+        population=np.array([322.0, 800.0]),
+        ave_occup=np.array([2.5, 3.0]),
+        latitude=np.array([37.88, 34.1]),
+        longitude=np.array([-122.23, -118.3]),
+    )
+
+    assert len(frame) == 2
+    assert isinstance(frame.med_inc, np.ndarray)
+    assert frame.med_inc.dtype == np.float64
+
+
+def test_house_frame_rejects_mismatched_lengths():
+    try:
+        HouseFrame(
+            med_inc=np.array([8.3, 3.1]),
+            house_age=np.array([41.0]),
+            ave_rooms=np.array([6.9, 5.0]),
+            ave_bedrms=np.array([1.0, 1.1]),
+            population=np.array([322.0, 800.0]),
+            ave_occup=np.array([2.5, 3.0]),
+            latitude=np.array([37.88, 34.1]),
+            longitude=np.array([-122.23, -118.3]),
+        )
+    except ValueError:
+        return
+    raise AssertionError("expected a ValueError for mismatched field lengths")

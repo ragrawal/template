@@ -1,0 +1,17 @@
+import pickle
+from pathlib import Path
+
+from {{ package_name }}.estimator import HousePredictionModel
+from {{ package_name }}.tasks.train_model import DATA_PATH, train
+
+
+def test_train_writes_a_usable_model_artifact(tmp_path: Path):
+    model_path = tmp_path / "model.pkl"
+
+    model = train(data_path=DATA_PATH, model_path=model_path)
+
+    assert isinstance(model, HousePredictionModel)
+    assert model_path.exists()
+    with model_path.open("rb") as f:
+        loaded = pickle.load(f)  # noqa: S301
+    assert isinstance(loaded, HousePredictionModel)

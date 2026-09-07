@@ -1,0 +1,50 @@
+"""House-price estimator.
+
+Follows the scikit-learn estimator convention: ``fit`` trains the model and
+returns ``self``; ``predict`` returns exactly one prediction per input row.
+"""
+
+from __future__ import annotations
+
+from typing import Self
+
+import numpy as np
+import numpy.typing as npt
+import pandas as pd
+from sklearn.linear_model import LinearRegression
+
+from {{ package_name }}.schema import HouseFrame, HousePredictionData
+
+
+class HousePredictionModel:
+    """Linear-regression estimator over the California-housing-shaped feature set."""
+
+    def transform(self, raw_x: HouseFrame) -> pd.DataFrame:
+        """Convert a ``HouseFrame`` into the flat feature table the model expects."""
+        return pd.DataFrame(
+            {
+                "MedInc": raw_x.med_inc,
+                "HouseAge": raw_x.house_age,
+                "AveRooms": raw_x.ave_rooms,
+                "AveBedrms": raw_x.ave_bedrms,
+                "Population": raw_x.population,
+                "AveOccup": raw_x.ave_occup,
+                "Latitude": raw_x.latitude,
+                "Longitude": raw_x.longitude,
+            }
+        )
+
+    def fit(self, raw_x: HouseFrame, raw_y: npt.NDArray[np.float64]) -> Self:
+        """Train the model on ``raw_x`` features and ``raw_y`` house values."""
+        self.model = LinearRegression()
+        self.model.fit(self.transform(raw_x), raw_y)
+        return self
+
+    def predict(self, raw_x: HouseFrame) -> HousePredictionData:
+        """Predict house values for ``raw_x``, one prediction per input row."""
+        price = self.model.predict(self.transform(raw_x))
+        return HousePredictionData(
+            price=price,
+            is_valid=(price > 0).tolist(),
+            info=np.array([None] * len(price)),
+        )

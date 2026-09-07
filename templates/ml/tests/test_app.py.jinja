@@ -1,0 +1,71 @@
+from collections.abc import Iterator
+from pathlib import Path
+
+import pytest
+from fastapi.testclient import TestClient
+from webapp import app as app_module
+
+from {{ package_name }}.tasks.train_model import DATA_PATH, train
+
+_INSTANCE_A = {
+    "med_inc": 8.3,
+    "house_age": 41.0,
+    "ave_rooms": 6.9,
+    "ave_bedrms": 1.0,
+    "population": 322.0,
+    "ave_occup": 2.5,
+    "latitude": 37.88,
+    "longitude": -122.23,
+}
+_INSTANCE_B = {
+    "med_inc": 3.1,
+    "house_age": 20.0,
+    "ave_rooms": 5.0,
+    "ave_bedrms": 1.1,
+    "population": 800.0,
+    "ave_occup": 3.0,
+    "latitude": 34.1,
+    "longitude": -118.3,
+}
+
+
+@pytest.fixture
+def client(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Iterator[TestClient]:
+    model_path = tmp_path / "model.pkl"
+    train(data_path=DATA_PATH, model_path=model_path)
+    monkeypatch.setattr(app_module, "MODEL_PATH", model_path)
+    monkeypatch.setattr(app_module, "_model", None)
+    with TestClient(app_module.app) as test_client:
+        yield test_client
+
+
+def test_health_returns_ok(client: TestClient):
+    response = client.get("/health")
+
+    assert response.status_code == 200
+    assert response.json() == {"status": "ok"}
+
+
+def test_predict_rejects_empty_instances(client: TestClient):
+    response = client.post("/predict", json={"instances": []})
+
+    assert response.status_code == 422
+
+
+def test_predict_returns_one_prediction_per_instance_in_submitted_order(client: TestClient):
+    forward = client.post("/predict", json={"instances": [_INSTANCE_A, _INSTANCE_B]})
+    reversed_ = client.post("/predict", json={"instances": [_INSTANCE_B, _INSTANCE_A]})
+
+    assert forward.status_code == 200
+    assert reversed_.status_code == 200
+
+    forward_predictions = forward.json()["predictions"]
+    reversed_predictions = reversed_.json()["predictions"]
+
+    assert len(forward_predictions) == 2
+    assert len(reversed_predictions) == 2
+    # Submitting the pair in reverse order should reverse the predictions too,
+    # proving order is preserved rather than coincidentally matching because
+    # the model treats every row the same way.
+    assert forward_predictions[0] == reversed_predictions[1]
+    assert forward_predictions[1] == reversed_predictions[0]

@@ -16,7 +16,7 @@ def given_broken_template_source(tmp_dir: Path, repo_root: Path) -> None:
     template_dir = repo_root / "templates" / "python-project"
     broken_dir = tmp_dir / "broken-template"
     shutil.copytree(template_dir, broken_dir)
-    ruff_config = broken_dir / "ruff.toml.jinja"
+    ruff_config = broken_dir / "{{ package_name }}" / "ruff.toml.jinja"
     ruff_config.write_text(ruff_config.read_text() + "\n[unterminated-section\n")
 
 
@@ -57,6 +57,20 @@ def then_file_does_not_contain(
     resolved_path = Path(resolve(path, repo_root, tmp_dir))
     assert resolved_path.is_file(), f"missing {resolved_path}"
     assert text not in resolved_path.read_text()
+
+
+@given(parsers.parse('the content of "{path}" is remembered'), target_fixture="remembered_content")
+def given_content_remembered(path: str, repo_root: Path, tmp_dir: Path) -> bytes:
+    resolved_path = Path(resolve(path, repo_root, tmp_dir))
+    return resolved_path.read_bytes()
+
+
+@then(parsers.parse('the file "{path}" still matches the remembered content'))
+def then_file_matches_remembered_content(
+    path: str, repo_root: Path, tmp_dir: Path, remembered_content: bytes
+) -> None:
+    resolved_path = Path(resolve(path, repo_root, tmp_dir))
+    assert resolved_path.read_bytes() == remembered_content
 
 
 @then(

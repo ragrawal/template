@@ -15,8 +15,12 @@ Generate a new project from it:
 uv tool run copier copy <this-repo-url-or-path>/templates/python-project path/to/new-project
 ```
 
-Answer the prompts (project name, package name, author, Python version, license,
-coverage threshold) or pass `--data key=value` / `--defaults` to skip them. See
+This creates the generated project at `path/to/new-project/<package_name>/`, not
+directly in `path/to/new-project/` — the template always nests its output under a
+folder named after the answered `package_name`.
+
+Answer the prompts (package name, Python version) or pass `--data key=value` /
+`--defaults` to skip them. See
 [`specs/001-python-project-template/quickstart.md`](specs/001-python-project-template/quickstart.md)
 for a full worked example.
 

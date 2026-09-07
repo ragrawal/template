@@ -19,7 +19,7 @@ Each development tool (lint/format, type-check, test, coverage, task runner) is 
 
 ### Architecture Patterns
 
-The shipped deliverable (`templates/python-project/`) is kept fully separate from this repository's own development tooling (root `pyproject.toml`, `tests/`, top-level `.github/workflows/`) by living in its own directory tree — nothing under this repository's own `tests/` or top-level `.github/` leaks into template output. `copier.yml` has no `_subdirectory`, so Copier's default excludes (`copier.yml`, `__pycache__`, `.git`, etc.) apply automatically to everything else in `templates/python-project/`.
+The shipped deliverable (`templates/python-project/`) is kept fully separate from this repository's own development tooling (root `pyproject.toml`, `tests/`, top-level `.github/workflows/`) by living in its own directory tree — nothing under this repository's own `tests/` or top-level `.github/` leaks into template output. `copier.yml` has no `_subdirectory`, so Copier's default excludes (`copier.yml`, `__pycache__`, `.git`, etc.) apply automatically to everything else in `templates/python-project/`. Everything below `copier.yml` lives under a templated `templates/python-project/{{ package_name }}/` directory, so generated output always lands nested under a `<package_name>/` folder inside whatever destination is passed to `copier copy`, rather than directly in that destination.
 
 ### Testing Strategy
 

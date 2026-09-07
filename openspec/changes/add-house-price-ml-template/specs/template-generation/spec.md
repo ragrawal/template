@@ -1,0 +1,8 @@
+## ADDED Requirements
+
+### Requirement: Generated project stores its Copier answers file under a hidden .answers/ directory
+`templates/python-project`'s `copier.yml` MUST set `_answers_file` to `"{{ package_name }}/.answers/.python_project.yml"` instead of Copier's default `.copier-answers.yml` at the project root, so a project's Copier answer records live in one hidden, discoverable location inside the generated project rather than as loose dotfiles scattered across the project root or the destination's parent directory. The `{{ package_name }}` prefix is required because Copier resolves `_answers_file` relative to the raw destination path passed on the command line, not relative to the `{{ package_name }}/` folder the template renders into. Setting `_answers_file` alone does not make Copier write an answers file: the template MUST also ship the canonical `{{ _copier_conf.answers_file }}.jinja` file (rendering `{{ _copier_answers|to_nice_yaml }}`) at its template root, since Copier only persists an answers file when the template contains a file whose rendered destination path resolves to `_copier_conf.answers_file`. No `_migrations` entry is needed for this change: the template never shipped an `_answers_file` or a `{{ _copier_conf.answers_file }}.jinja` boilerplate file before this change, so no project generated before it can have a `.copier-answers.yml` (or any other answers file) to relocate — there is nothing for a migration to move.
+
+#### Scenario: Fresh generation writes the answers file under .answers/
+- **WHEN** a developer generates a new project from `templates/python-project`
+- **THEN** `<dest>/<package_name>/.answers/.python_project.yml` contains the recorded answers, and no `.copier-answers.yml` exists at the project root

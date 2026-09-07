@@ -7,6 +7,7 @@ import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 
+import pytest
 from pytest_bdd import given, parsers, then, when
 
 
@@ -65,3 +66,10 @@ def then_command_exits_nonzero(last_result: CommandResult) -> None:
 @then(parsers.parse('the output contains "{text}"'))
 def then_output_contains(last_result: CommandResult, text: str) -> None:
     assert text.lower() in last_result.output.lower(), last_result.output
+
+
+@given("docker is available")
+def given_docker_available() -> None:
+    result = subprocess.run(["docker", "info"], capture_output=True)
+    if result.returncode != 0:
+        pytest.skip("docker is not available in this environment")

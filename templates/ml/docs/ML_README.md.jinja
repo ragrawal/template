@@ -1,0 +1,65 @@
+# House-price ML pipeline
+
+This project was generated in two steps:
+
+```bash
+copier copy <template-source>/templates/python-project <dest> --data package_name={{ package_name }}
+copier copy <template-source>/templates/ml <dest>/{{ package_name }} --trust
+```
+
+The second step adds a local-only house-price estimator, training task, and
+FastAPI serving app on top of the base project. No cloud credentials or
+network access are required at any point: training data is bundled at
+`resources/house_price_raw.csv`, and the trained model is a local file.
+
+## Train the model
+
+```bash
+uv run python -m {{ package_name }}.tasks.train_model
+```
+
+Reads `resources/house_price_raw.csv`, fits `HousePredictionModel`, logs the
+held-out RMSE/R2, and writes `models/model.pkl`. `models/` is not tracked in
+git by default — add `models/` to `.gitignore` if you don't want the trained
+artifact committed, or keep it if you'd rather ship a pinned model with the
+repo.
+
+## Run the webapp locally
+
+The webapp requires `models/model.pkl` to already exist (see above).
+
+```bash
+uv run uvicorn webapp.app:app --reload
+```
+
+Then:
+
+```bash
+curl localhost:8000/health
+curl -X POST localhost:8000/predict -H 'Content-Type: application/json' -d '{
+  "instances": [
+    {"med_inc": 8.3, "house_age": 41, "ave_rooms": 6.9, "ave_bedrms": 1.0,
+     "population": 322, "ave_occup": 2.5, "latitude": 37.88, "longitude": -122.23}
+  ]
+}'
+```
+
+## Build and run the Docker image
+
+Train the model first (`models/model.pkl` must exist in the build context),
+then build from the project root:
+
+```bash
+uv run python -m {{ package_name }}.tasks.train_model
+docker build -f docker/Dockerfile -t {{ package_name }} .
+docker run -p 8080:8080 {{ package_name }}
+```
+
+## Swapping in a real dataset
+
+`resources/house_price_raw.csv` is a downsampled `sklearn.datasets.fetch_california_housing`
+sample, meant as a working placeholder. To use your own data, replace that
+file with a CSV containing the same columns (`MedInc`, `HouseAge`, `AveRooms`,
+`AveBedrms`, `Population`, `AveOccup`, `Latitude`, `Longitude`,
+`MedHouseVal`), or edit `{{ package_name }}/tasks/train_model.py`'s
+`frame_to_features` and `TARGET_COLUMN` to match your own schema.

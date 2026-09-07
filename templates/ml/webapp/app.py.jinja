@@ -1,0 +1,117 @@
+"""FastAPI serving app for the house-price model.
+
+Loads the trained model artifact and the estimator/schema classes from the
+local filesystem at startup. No cloud credentials or external services are
+required at container start: ``models/model.pkl`` must already exist,
+produced by ``python -m {{ package_name }}.tasks.train_model``.
+"""
+
+from __future__ import annotations
+
+import pickle
+from collections.abc import AsyncGenerator
+from contextlib import asynccontextmanager
+from pathlib import Path
+from typing import Any
+
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+
+from {{ package_name }}.estimator import HousePredictionModel
+from {{ package_name }}.schema import HouseFrame
+
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+MODEL_PATH = PROJECT_ROOT / "models" / "model.pkl"
+
+_model: HousePredictionModel | None = None
+
+
+def _load_model() -> HousePredictionModel:
+    global _model
+    if _model is None:
+        if not MODEL_PATH.exists():
+            raise RuntimeError(
+                f"Model artifact not found at {MODEL_PATH}. "
+                f"Run `python -m {{ package_name }}.tasks.train_model` first."
+            )
+        with MODEL_PATH.open("rb") as f:
+            _model = pickle.load(f)  # noqa: S301
+    return _model
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
+    """Load the model on startup."""
+    _load_model()
+    yield
+
+
+app = FastAPI(title="{{ package_name }} serving", lifespan=lifespan)
+
+
+class HealthResponse(BaseModel):
+    """Health check response."""
+
+    status: str
+
+
+class HouseRecord(BaseModel):
+    """A single house's features, as accepted by ``POST /predict``."""
+
+    med_inc: float
+    house_age: float
+    ave_rooms: float
+    ave_bedrms: float
+    population: float
+    ave_occup: float
+    latitude: float
+    longitude: float
+
+
+class PredictRequest(BaseModel):
+    """Request body for ``POST /predict``."""
+
+    instances: list[HouseRecord]
+
+
+class Prediction(BaseModel):
+    """A single prediction."""
+
+    price: float
+    is_valid: bool
+
+
+class PredictResponse(BaseModel):
+    """Response body for ``POST /predict``."""
+
+    predictions: list[Prediction]
+
+
+@app.get("/health")
+def health() -> HealthResponse:
+    """Report readiness. Returns success once the model artifact is loaded."""
+    return HealthResponse(status="ok")
+
+
+@app.post("/predict")
+def predict(request: PredictRequest) -> PredictResponse:
+    """Return one prediction per submitted record, in submitted order."""
+    if not request.instances:
+        raise HTTPException(status_code=422, detail="instances must not be empty")
+
+    features = HouseFrame(
+        med_inc=[r.med_inc for r in request.instances],
+        house_age=[r.house_age for r in request.instances],
+        ave_rooms=[r.ave_rooms for r in request.instances],
+        ave_bedrms=[r.ave_bedrms for r in request.instances],
+        population=[r.population for r in request.instances],
+        ave_occup=[r.ave_occup for r in request.instances],
+        latitude=[r.latitude for r in request.instances],
+        longitude=[r.longitude for r in request.instances],
+    )
+    result = _load_model().predict(features)
+    predictions: list[Any] = [
+        Prediction(price=float(price), is_valid=bool(is_valid))
+        for price, is_valid in zip(result.price, result.is_valid, strict=True)
+    ]
+    return PredictResponse(predictions=predictions)
