@@ -1,10 +1,4 @@
-# ai-agent-guidance Specification
-
-## Purpose
-
-Defines the documentation and functional AI-assistant skill bundled into every generated project so an AI coding assistant can understand project conventions and invoke common actions without extra setup.
-
-## Requirements
+## MODIFIED Requirements
 
 ### Requirement: Bundled AI guidance documentation
 Every generated project MUST include an `AGENTS.md` file documenting the project's conventions, a set of baseline coding-guideline principles for an AI coding assistant to follow, and a pointer to the project's quality-check command. `AGENTS.md` MUST reference the bundled `run-quality-checks` skill for the quality-check command's step-by-step detail rather than duplicating it. Its "Coding Principles" section MUST also instruct the assistant to (1) structure tests so a human can add a new scenario easily, favoring `pytest.mark.parametrize` paired with `pytest.param(..., id="...")` so each case gets a descriptive, human-readable name instead of a positional index, and (2) discuss the algorithm options considered and their time/space complexity before implementing non-trivial logic.
@@ -43,21 +37,3 @@ These principles MUST be presented as defaults, not strict rules: the assistant 
 #### Scenario: Bundled guidance covers documentation and Pydantic field conventions
 - **WHEN** a developer opens a newly generated project's `AGENTS.md`
 - **THEN** its Coding Principles section instructs the assistant to document every public class and method with a Google-style docstring (exempting private helpers and test functions) and to declare every Pydantic model field via `Field(..., description=...)`
-
-### Requirement: Bundled functional quality-check skill
-Every generated project MUST include a functional, invocable assistant skill (`.claude/skills/run-quality-checks/SKILL.md`) that an AI coding assistant can invoke to run the project's quality-check task.
-
-#### Scenario: Assistant invokes the skill to run checks
-- **WHEN** a contributor asks their AI coding assistant to run the generated project's quality checks
-- **THEN** the assistant identifies and invokes `.claude/skills/run-quality-checks`, which runs `uv run poe check`, using only the bundled guidance
-
-### Requirement: Bundled BDD-testing skill
-Every generated project MUST include a functional, invocable assistant skill (`.claude/skills/write-bdd-tests/SKILL.md`) documenting the project's `tests/bdd/` directory structure, generic step vocabulary, action-module pattern, and the pytest-bdd step-registration convention, so an AI coding assistant can write correctly-wired BDD tests without rediscovering the registration gotcha. The skill's step-placement guidance MUST state a preference — not a strict rule — for generic, reusable step functions in the shared `tests/bdd/actions/` modules, while allowing a step that is genuinely specific to one feature and not reusable elsewhere to live directly in that feature's own step/binding file.
-
-#### Scenario: Assistant writes a new BDD scenario using the bundled skill
-- **WHEN** a contributor asks their AI coding assistant to add a new BDD test to a generated project
-- **THEN** the assistant identifies and invokes `.claude/skills/write-bdd-tests`, and follows its documented `tests/bdd/<feature>/` layout and action-module registration pattern, using only the bundled guidance
-
-#### Scenario: A feature-specific step is placed in its own file
-- **WHEN** a contributor's AI coding assistant needs to write a step that is genuinely specific to one feature and would not be reusable elsewhere
-- **THEN** the skill's guidance permits placing that step function directly in the feature's own step/binding file instead of forcing it into a shared action module

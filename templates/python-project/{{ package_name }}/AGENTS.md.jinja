@@ -57,6 +57,14 @@ exception, ask for approval before deviating rather than silently doing so.
 - **Discuss algorithm complexity**: before implementing non-trivial logic,
   briefly discuss the algorithm options considered and their
   time/space complexity, rather than silently picking one.
+- **Document public classes and methods**: every public class and
+  function/method must have a Google-style docstring describing its
+  purpose, enforced by the bundled lint step's docstring rules (`ruff`'s
+  `D` rules, configured with `convention = "google"`); private
+  (leading-underscore) helpers and test functions are exempt.
+- **Self-documenting Pydantic models**: define every Pydantic `BaseModel`
+  field via `Field(..., description="...")`, even when no other validation
+  is needed, so the model's JSON schema documents itself.
 
 ## Conventions
 

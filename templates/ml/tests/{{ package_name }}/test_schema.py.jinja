@@ -1,6 +1,8 @@
+from collections.abc import Callable
+
 import numpy as np
 
-from {{ package_name }}.schema import HouseFrame
+from {{ package_name }}.schema import HouseFrame, HousePredictionData
 
 
 def test_house_frame_accepts_array_input():
@@ -35,3 +37,7 @@ def test_house_frame_rejects_mismatched_lengths():
     except ValueError:
         return
     raise AssertionError("expected a ValueError for mismatched field lengths")
+
+
+def test_schema_models_fields_are_documented(assert_fields_documented: Callable[..., None]):
+    assert_fields_documented(HouseFrame, HousePredictionData)

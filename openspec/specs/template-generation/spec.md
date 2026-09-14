@@ -36,11 +36,11 @@ The generated project MUST include configuration for a linter/formatter (`ruff.t
 - **THEN** ruff picks up the change without requiring any edit to `pyrightconfig.json`, `pytest.ini`, or `.coveragerc`
 
 ### Requirement: Generated project pins its Python version
-The generated project MUST pin the Python version used for local development via a `.python-version` file, materialized immediately after generation.
+The generated project MUST pin the Python version used for local development via a `.python-version` file, materialized immediately after generation, written inside the generated `package_name` project directory (not the Copier destination path).
 
 #### Scenario: Python version is pinned after generation
 - **WHEN** Copier finishes generating a project with `python_version` answered (default `3.12`)
-- **THEN** the generated project contains a `.python-version` file matching that answer, produced by a post-generation `uv python pin` task
+- **THEN** the generated project contains a `.python-version` file matching that answer, produced by a post-generation `uv python pin` task, located inside the `{{ package_name }}/` project directory rather than at the Copier destination root
 
 ### Requirement: Generated project uses a src-layout installable package structure
 This repository's template MUST generate projects intended as installable Python packages, using a `src`-layout folder structure and PEP 621 packaging metadata (via the `hatchling` build backend), nested inside a top-level folder named after `package_name`.
@@ -91,3 +91,10 @@ Since `project_name`, `description`, `author_name`, `author_email`, `license`, a
 #### Scenario: Rendering with a missing variable errors
 - **WHEN** a template file references a variable that has no value at render time (for example because the caller bypassed `copier.yml`'s question logic entirely)
 - **THEN** rendering fails with an error rather than producing output containing a silently blank value
+
+### Requirement: Generated project stores its Copier answers file under a hidden .answers/ directory
+`templates/python-project`'s `copier.yml` MUST set `_answers_file` to `"{{ package_name }}/.answers/.python_project.yml"` instead of Copier's default `.copier-answers.yml` at the project root, so a project's Copier answer records live in one hidden, discoverable location inside the generated project rather than as loose dotfiles scattered across the project root or the destination's parent directory. The `{{ package_name }}` prefix is required because Copier resolves `_answers_file` relative to the raw destination path passed on the command line, not relative to the `{{ package_name }}/` folder the template renders into. Setting `_answers_file` alone does not make Copier write an answers file: the template MUST also ship the canonical `{{ _copier_conf.answers_file }}.jinja` file (rendering `{{ _copier_answers|to_nice_yaml }}`) at its template root, since Copier only persists an answers file when the template contains a file whose rendered destination path resolves to `_copier_conf.answers_file`. No `_migrations` entry is needed for this change: the template never shipped an `_answers_file` or a `{{ _copier_conf.answers_file }}.jinja` boilerplate file before this change, so no project generated before it can have a `.copier-answers.yml` (or any other answers file) to relocate — there is nothing for a migration to move.
+
+#### Scenario: Fresh generation writes the answers file under .answers/
+- **WHEN** a developer generates a new project from `templates/python-project`
+- **THEN** `<dest>/<package_name>/.answers/.python_project.yml` contains the recorded answers, and no `.copier-answers.yml` exists at the project root

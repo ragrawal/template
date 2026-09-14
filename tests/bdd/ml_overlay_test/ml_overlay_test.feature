@@ -9,7 +9,8 @@ Feature: ML overlay template generation
     Given the content of "{tmp_dir}/project/house_price/.answers/.python_project.yml" is remembered
     When the user runs "uv tool run copier copy {repo_root}/templates/ml {tmp_dir}/project/house_price --trust"
     Then the command exits with code 0
-    And the following files exist: {tmp_dir}/project/house_price/.answers/.ml.yml, {tmp_dir}/project/house_price/src/house_price/estimator.py, {tmp_dir}/project/house_price/webapp/app.py, {tmp_dir}/project/house_price/docker/Dockerfile
+    And the following files exist: {tmp_dir}/project/house_price/.answers/.ml.yml, {tmp_dir}/project/house_price/src/house_price/estimator.py, {tmp_dir}/project/house_price/webapp/app.py, {tmp_dir}/project/house_price/docker/Dockerfile, {tmp_dir}/project/house_price/tests/house_price/test_estimator.py, {tmp_dir}/project/house_price/tests/house_price/test_schema.py, {tmp_dir}/project/house_price/tests/house_price/tasks/test_train_model.py, {tmp_dir}/project/house_price/tests/webapp/test_app.py
+    And the following files do not exist: {tmp_dir}/project/house_price/tests/test_estimator.py, {tmp_dir}/project/house_price/tests/test_schema.py, {tmp_dir}/project/house_price/tests/test_train_model.py, {tmp_dir}/project/house_price/tests/test_app.py
     And the file "{tmp_dir}/project/house_price/.answers/.python_project.yml" still matches the remembered content
     When the user runs "uv run poe check" in "{tmp_dir}/project/house_price"
     Then the command exits with code 0
@@ -20,8 +21,17 @@ Feature: ML overlay template generation
     When the user runs "docker build -f docker/Dockerfile -t house_price_bdd_test ." in "{tmp_dir}/project/house_price"
     Then the command exits with code 0
 
-  Scenario: Running templates/ml against a destination without templates/python-project fails clearly
+  Scenario: Running templates/ml against a destination without templates/python-project fails clearly and leaves no files behind
     Given a temporary directory
     When the user runs "uv tool run copier copy {repo_root}/templates/ml {tmp_dir}/project --data package_name=house_price --defaults --trust"
     Then the command exits with a non-zero code
     And the output contains "templates/python-project"
+    And the following files do not exist: {tmp_dir}/project/.answers/.ml.yml, {tmp_dir}/project/webapp/app.py, {tmp_dir}/project/docker/Dockerfile, {tmp_dir}/project/docs/ML_README.md, {tmp_dir}/project/.dockerignore
+
+  Scenario: Running templates/ml against destination "." fails clearly instead of silently omitting files
+    Given a temporary directory
+    When the user runs "uv tool run copier copy {repo_root}/templates/python-project {tmp_dir}/project --data package_name=house_price --defaults --trust"
+    When the user runs "uv tool run copier copy {repo_root}/templates/ml . --trust" in "{tmp_dir}/project/house_price"
+    Then the command exits with a non-zero code
+    And the output contains "estimator.py"
+    And the following files do not exist: {tmp_dir}/project/house_price/.answers/.ml.yml, {tmp_dir}/project/house_price/webapp/app.py, {tmp_dir}/project/house_price/docker/Dockerfile, {tmp_dir}/project/house_price/docs/ML_README.md, {tmp_dir}/project/house_price/.dockerignore, {tmp_dir}/project/house_price/src/house_price/estimator.py, {tmp_dir}/project/house_price/src/house_price/schema.py

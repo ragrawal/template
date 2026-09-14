@@ -15,7 +15,7 @@ from pathlib import Path
 from typing import Any
 
 from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from {{ package_name }}.estimator import HousePredictionModel
 from {{ package_name }}.schema import HouseFrame
@@ -52,39 +52,45 @@ app = FastAPI(title="{{ package_name }} serving", lifespan=lifespan)
 class HealthResponse(BaseModel):
     """Health check response."""
 
-    status: str
+    status: str = Field(
+        description="Readiness status, set to 'ok' once the model artifact is loaded"
+    )
 
 
 class HouseRecord(BaseModel):
     """A single house's features, as accepted by ``POST /predict``."""
 
-    med_inc: float
-    house_age: float
-    ave_rooms: float
-    ave_bedrms: float
-    population: float
-    ave_occup: float
-    latitude: float
-    longitude: float
+    med_inc: float = Field(
+        description="Median income in block group (tens of thousands of dollars)"
+    )
+    house_age: float = Field(description="Median house age in block group (years)")
+    ave_rooms: float = Field(description="Average number of rooms per household")
+    ave_bedrms: float = Field(description="Average number of bedrooms per household")
+    population: float = Field(description="Block group population")
+    ave_occup: float = Field(description="Average number of household members")
+    latitude: float = Field(description="Block group latitude")
+    longitude: float = Field(description="Block group longitude")
 
 
 class PredictRequest(BaseModel):
     """Request body for ``POST /predict``."""
 
-    instances: list[HouseRecord]
+    instances: list[HouseRecord] = Field(description="Feature records to predict house values for")
 
 
 class Prediction(BaseModel):
     """A single prediction."""
 
-    price: float
-    is_valid: bool
+    price: float = Field(description="Predicted median house value")
+    is_valid: bool = Field(description="Whether the prediction looks plausible (price > 0)")
 
 
 class PredictResponse(BaseModel):
     """Response body for ``POST /predict``."""
 
-    predictions: list[Prediction]
+    predictions: list[Prediction] = Field(
+        description="One prediction per submitted record, in submitted order"
+    )
 
 
 @app.get("/health")

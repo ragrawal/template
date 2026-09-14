@@ -1,11 +1,11 @@
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
-from webapp import app as app_module
 
 from {{ package_name }}.tasks.train_model import DATA_PATH, train
+from webapp import app as app_module
 
 _INSTANCE_A = {
     "med_inc": 8.3,
@@ -69,3 +69,13 @@ def test_predict_returns_one_prediction_per_instance_in_submitted_order(client: 
     # the model treats every row the same way.
     assert forward_predictions[0] == reversed_predictions[1]
     assert forward_predictions[1] == reversed_predictions[0]
+
+
+def test_webapp_models_fields_are_documented(assert_fields_documented: Callable[..., None]):
+    assert_fields_documented(
+        app_module.HealthResponse,
+        app_module.HouseRecord,
+        app_module.PredictRequest,
+        app_module.Prediction,
+        app_module.PredictResponse,
+    )

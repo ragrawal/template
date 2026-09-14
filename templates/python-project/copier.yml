@@ -42,8 +42,11 @@ python_version:
     - "3.14"
 
 # Materialize a real .python-version via uv immediately after generation.
+# working_directory is required because _tasks otherwise run in the Copier
+# destination root, one level above the generated {{ package_name }}/ project.
 _tasks:
-  - "uv python pin {{ python_version }}"
+  - command: "uv python pin {{ python_version }}"
+    working_directory: "{{ package_name }}"
 
 # No _migrations entry for the _answers_file relocation above: this template
 # never wrote any answers file before this change (no template file matched
