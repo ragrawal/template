@@ -13,4 +13,8 @@
 * `brew install --cask codex`
 * `brew install uv`
 
+4. Agentic Tools
+* openspec
+* `npm install -g openspecui`
+
  
