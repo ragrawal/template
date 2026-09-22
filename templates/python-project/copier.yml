@@ -2,7 +2,7 @@
 # See specs/001-python-project-template/contracts/template-answers-schema.md for the
 # full answer-schema contract these prompts implement.
 
-_min_copier_version: "9.0.0"
+_min_copier_version: "9.15.0"
 
 # No _subdirectory: the template content lives directly alongside this file
 # (rather than in a nested template/ subdir) so Copier's own default excludes
@@ -13,12 +13,10 @@ _min_copier_version: "9.0.0"
 
 _envops:
   keep_trailing_newline: true
-  # Plain YAML strings are passed to jinja2.Environment(**envops) verbatim, so
-  # `undefined: jinja2.StrictUndefined` would hand Jinja the literal string
-  # "jinja2.StrictUndefined" instead of the class, and fail Jinja's own
-  # `issubclass(environment.undefined, Undefined)` sanity check. The
-  # `!!python/name:` tag makes PyYAML resolve this to the actual class object.
-  undefined: !!python/name:jinja2.StrictUndefined
+  # Copier only resolves this string to the actual jinja2 class since 9.15.0
+  # (hence _min_copier_version above) - on older Copier it's handed to Jinja
+  # as a literal string and fails Jinja's own environment sanity check.
+  undefined: jinja2.StrictUndefined
 
 # Keep every generated project's Copier answer record in one hidden,
 # discoverable location instead of a loose root-level dotfile. Copier resolves
