@@ -13,7 +13,12 @@ _min_copier_version: "9.0.0"
 
 _envops:
   keep_trailing_newline: true
-  undefined: jinja2.StrictUndefined
+  # Plain YAML strings are passed to jinja2.Environment(**envops) verbatim, so
+  # `undefined: jinja2.StrictUndefined` would hand Jinja the literal string
+  # "jinja2.StrictUndefined" instead of the class, and fail Jinja's own
+  # `issubclass(environment.undefined, Undefined)` sanity check. The
+  # `!!python/name:` tag makes PyYAML resolve this to the actual class object.
+  undefined: !!python/name:jinja2.StrictUndefined
 
 # Keep every generated project's Copier answer record in one hidden,
 # discoverable location instead of a loose root-level dotfile. Copier resolves
