@@ -13,8 +13,18 @@
 * `brew install --cask codex`
 * `brew install uv`
 
+4. Setup Iterm
+* `brew install zsh`
+* `sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"`
+* `brew install powerlevel10k && echo "source $(brew --prefix)/share/powerlevel10k/powerlevel10k.zsh-theme" >>~/.zshrc`
+
+
 4. Agentic Tools
 * openspec
 * `npm install -g openspecui`
+
+5. Additional Tools
+* Amphetamine
+
 
  
