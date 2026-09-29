@@ -25,6 +25,8 @@
 
 5. Additional Tools
 * Amphetamine
+* `brew install --cask visual-studio-code`
+* 
 
 
  
